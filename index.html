@@ -525,5 +525,62 @@
     document.getElementById('celBtn').addEventListener('click',function(){burst(26);});
   })();
 </script>
+
+<!-- visit tracker: logs who opened the page and for how long (see stats.html) -->
+<script type="module">
+try{
+  const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
+  const { getFirestore, collection, addDoc, updateDoc, serverTimestamp } =
+    await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+
+  const app = initializeApp({
+    apiKey: "AIzaSyDVTXFV6iGxCt0Eu5aR7cw7pn58r3msIvs",
+    authDomain: "our-corner-a8019.firebaseapp.com",
+    projectId: "our-corner-a8019",
+    storageBucket: "our-corner-a8019.firebasestorage.app",
+    messagingSenderId: "512923628462",
+    appId: "1:512923628462:web:120f019d385644a0290e3f"
+  }, "visit-tracker");
+  const db = getFirestore(app);
+
+  // who: taken from ?v=name in the link, then remembered on this device
+  let who = new URLSearchParams(location.search).get("v");
+  if(who){ localStorage.setItem("osl_visitor", who); }
+  else{ who = localStorage.getItem("osl_visitor") || "unknown"; }
+
+  const visitRef = await addDoc(collection(db, "visits"), {
+    visitor: who,
+    page: location.pathname.split("/").pop() || "index.html",
+    startedAt: serverTimestamp(),
+    startedAtLocal: new Date().toISOString(),
+    seconds: 0,
+    device: navigator.userAgent
+  });
+
+  // count time only while the tab is visible
+  let activeMs = 0, lastTick = Date.now(), dirty = false;
+  function tick(){
+    const now = Date.now();
+    if(document.visibilityState === "visible"){ activeMs += now - lastTick; dirty = true; }
+    lastTick = now;
+  }
+  function flush(){
+    tick();
+    if(!dirty) return;
+    dirty = false;
+    updateDoc(visitRef, {
+      seconds: Math.round(activeMs/1000),
+      endedAtLocal: new Date().toISOString()
+    }).catch(function(){ dirty = true; });
+  }
+  setInterval(tick, 5000);
+  setInterval(flush, 20000);
+  document.addEventListener("visibilitychange", function(){
+    if(document.visibilityState === "hidden") flush();
+    else lastTick = Date.now();
+  });
+  window.addEventListener("pagehide", flush);
+}catch(e){ /* tracking is best-effort; never break the page */ }
+</script>
 </body>
 </html>

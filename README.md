@@ -30,6 +30,17 @@ Keep `index.html` and the `assets` folder **together** in the same folder. Don't
 ## Want a custom name like koty-lolty.com?
 The hosts above give a free `.netlify.app` / `.github.io` address. A custom `.com` costs a little (usually a few dollars/year) at Namecheap, GoDaddy, or Cloudflare, and you can point it to the free hosting above.
 
+## Visit tracking 👀
+The site quietly logs every page open to your Firebase project (`our-corner-a8019`, collection `visits`): who, when, and how many minutes they stayed (only time the tab was actually visible counts).
+
+- **Who is who:** share personalized links — e.g. send her `https://your-site/?v=lolty` and open it yourself as `?v=koty`. The name is remembered on that device, so later plain visits are still tagged. Visits without a name show as `unknown`.
+- **See the results:** open `stats.html` on the site (e.g. `https://your-site/stats.html`). It shows per-person totals and every visit with date, minutes, and device.
+- **Firestore rules:** the `visits` collection must be readable/writable, same as `messages`:
+  ```
+  match /visits/{doc} { allow read, write: if true; }
+  ```
+- **Heads-up:** `stats.html` has no password — anyone who knows the URL can see it. Rename the file to something unguessable if you want it more private.
+
 ## Tip
 Videos are large (~19 MB total). On the free hosts above that's totally fine. If a video ever loads slowly, that's just the file size — give it a moment.
 
